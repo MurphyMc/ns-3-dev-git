@@ -1,6 +1,8 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
  * Copyright (c) 2007 Emmanuelle Laprise
+ * Copyright (c) 2012 Jeffrey Young
+ * Copyright (c) 2014 Murphy McCauley
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -16,6 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * Author: Emmanuelle Laprise<emmanuelle.laprise@bluekazoo.ca>
+ * Author: Jeff Young <jyoung9@gatech.edu>
+ * Author: Murphy McCauley <murphy.mccauley@gmail.com>
  */
 
 #ifndef CSMA_CHANNEL_H
@@ -178,19 +182,25 @@ public:
    * packet p as the m_currentPkt, the packet being currently
    * transmitting.
    *
+   * \param deviceId The ID that was assigned to the net device when
+   * it was attached to the channel.
+   *
    * \return Returns true unless the source was detached before it
    * completed its transmission.
    */
-  bool TransmitEnd ();
+  bool TransmitEnd (uint32_t deviceId);
 
   /**
    * \brief Indicates that the channel has finished propagating the
    * current packet. The channel is released and becomes free.
    *
-   * Calls the receive function of every active net device that is
+   * \param deviceId The ID that was assigned to the net device when
+   * it was attached to the channel.
+   *
+   * Calls the receive function of the other net device that is
    * attached to the channel.
    */
-  void PropagationCompleteEvent ();
+  void PropagationCompleteEvent (uint32_t deviceId);
 
   /**
    * \return Returns the device number assigned to a net device by the
@@ -202,10 +212,15 @@ public:
   int32_t GetDeviceNum (Ptr<CsmaNetDevice> device);
 
   /**
+   * \brief Checks the state of the channel
+   *
+   * \param deviceId The ID that was assigned to the net device when
+   * it was attached to the channel.
+   *
    * \return Returns the state of the channel (IDLE -- free,
    * TRANSMITTING -- busy, PROPAGATING - busy )
    */
-  WireState GetState ();
+  WireState GetState (uint32_t deviceId);
 
   /**
    * \brief Indicates if the channel is busy. The channel will only
@@ -214,7 +229,7 @@ public:
    * \return Returns true if the channel is busy and false if it is
    * free.
    */
-  bool IsBusy ();
+  bool IsBusy (uint32_t deviceId);
 
   /**
    * \brief Indicates if a net device is currently attached or
@@ -222,6 +237,7 @@ public:
    *
    * \param deviceId The ID that was assigned to the net device when
    * it was attached to the channel.
+   *
    * \return Returns true if the net device is attached to the
    * channel, false otherwise.
    */

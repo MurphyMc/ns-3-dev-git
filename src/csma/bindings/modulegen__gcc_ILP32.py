@@ -4018,26 +4018,26 @@ def register_Ns3CsmaChannel_methods(root_module, cls):
     cls.add_method('TransmitStart', 
                    'bool', 
                    [param('ns3::Ptr< ns3::Packet >', 'p'), param('uint32_t', 'srcId')])
-    ## csma-channel.h (module 'csma'): bool ns3::CsmaChannel::TransmitEnd() [member function]
+    ## csma-channel.h (module 'csma'): bool ns3::CsmaChannel::TransmitEnd(uint32_t deviceId) [member function]
     cls.add_method('TransmitEnd', 
                    'bool', 
-                   [])
-    ## csma-channel.h (module 'csma'): void ns3::CsmaChannel::PropagationCompleteEvent() [member function]
+                   [param('uint32_t', 'deviceId')])
+    ## csma-channel.h (module 'csma'): void ns3::CsmaChannel::PropagationCompleteEvent(uint32_t deviceId) [member function]
     cls.add_method('PropagationCompleteEvent', 
                    'void', 
-                   [])
+                   [param('uint32_t', 'deviceId')])
     ## csma-channel.h (module 'csma'): int32_t ns3::CsmaChannel::GetDeviceNum(ns3::Ptr<ns3::CsmaNetDevice> device) [member function]
     cls.add_method('GetDeviceNum', 
                    'int32_t', 
                    [param('ns3::Ptr< ns3::CsmaNetDevice >', 'device')])
-    ## csma-channel.h (module 'csma'): ns3::WireState ns3::CsmaChannel::GetState() [member function]
+    ## csma-channel.h (module 'csma'): ns3::WireState ns3::CsmaChannel::GetState(uint32_t deviceId) [member function]
     cls.add_method('GetState', 
                    'ns3::WireState', 
-                   [])
-    ## csma-channel.h (module 'csma'): bool ns3::CsmaChannel::IsBusy() [member function]
+                   [param('uint32_t', 'deviceId')])
+    ## csma-channel.h (module 'csma'): bool ns3::CsmaChannel::IsBusy(uint32_t deviceId) [member function]
     cls.add_method('IsBusy', 
                    'bool', 
-                   [])
+                   [param('uint32_t', 'deviceId')])
     ## csma-channel.h (module 'csma'): bool ns3::CsmaChannel::IsActive(uint32_t deviceId) [member function]
     cls.add_method('IsActive', 
                    'bool', 
