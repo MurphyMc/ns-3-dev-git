@@ -40,7 +40,7 @@ class Queue;
 class CsmaChannel;
 class ErrorModel;
 
-/** 
+/**
  * \defgroup csma CSMA Network Device
  *
  * This section documents the API of the ns-3 csma module. For a generic functional description, please refer to the ns-3 manual.
@@ -53,9 +53,9 @@ class ErrorModel;
  *
  * The Csma net device class is analogous to layer 1 and 2 of the
  * TCP stack. The NetDevice takes a raw packet of bytes and creates a
- * protocol specific packet from them. 
+ * protocol specific packet from them.
  */
-class CsmaNetDevice : public NetDevice 
+class CsmaNetDevice : public NetDevice
 {
 public:
   static TypeId GetTypeId (void);
@@ -103,7 +103,7 @@ public:
    * \param maxRetries Maximum number of retries before packet is discard
    * \param ceiling Cap on the exponential function when calculating max slots
    */
-  void SetBackoffParams (Time slotTime, uint32_t minSlots, uint32_t maxSlots, 
+  void SetBackoffParams (Time slotTime, uint32_t minSlots, uint32_t maxSlots,
                          uint32_t maxRetries, uint32_t ceiling);
 
   /**
@@ -135,7 +135,7 @@ public:
    *
    * \return a pointer to the queue.
    */
-  Ptr<Queue> GetQueue (void) const; 
+  Ptr<Queue> GetQueue (void) const;
 
   /**
    * Attach a receive ErrorModel to the CsmaNetDevice.
@@ -144,7 +144,7 @@ public:
    * the packet receive chain to simulate data errors in during transmission.
    *
    * \see ErrorModel
-   * \param em a pointer to the ErrorModel 
+   * \param em a pointer to the ErrorModel
    */
   void SetReceiveErrorModel (Ptr<ErrorModel> em);
 
@@ -153,7 +153,7 @@ public:
    *
    * The CsmaNetDevice receives packets from its connected channel
    * and forwards them up the protocol stack.  This is the public method
-   * used by the channel to indicate that the last bit of a packet has 
+   * used by the channel to indicate that the last bit of a packet has
    * arrived at the device.
    *
    * \see CsmaChannel
@@ -225,9 +225,9 @@ public:
    * \brief Make and return a MAC multicast address using the provided
    *        multicast group
    *
-   * \RFC{1112} says that an Ipv4 host group address is mapped to an Ethernet 
-   * multicast address by placing the low-order 23-bits of the IP address into 
-   * the low-order 23 bits of the Ethernet multicast address 
+   * \RFC{1112} says that an Ipv4 host group address is mapped to an Ethernet
+   * multicast address by placing the low-order 23-bits of the IP address into
+   * the low-order 23 bits of the Ethernet multicast address
    * 01-00-5E-00-00-00 (hex).
    *
    * This method performs the multicast address creation function appropriate
@@ -264,7 +264,7 @@ public:
    * \param protocolNumber protocol number
    * \return true if successfull, false otherwise (drop, ...)
    */
-  virtual bool Send (Ptr<Packet> packet, const Address& dest, 
+  virtual bool Send (Ptr<Packet> packet, const Address& dest,
                      uint16_t protocolNumber);
 
   /**
@@ -275,7 +275,7 @@ public:
    * \param protocolNumber protocol number
    * \return true if successfull, false otherwise (drop, ...)
    */
-  virtual bool SendFrom (Ptr<Packet> packet, const Address& source, const Address& dest, 
+  virtual bool SendFrom (Ptr<Packet> packet, const Address& source, const Address& dest,
                          uint16_t protocolNumber);
 
   /**
@@ -333,7 +333,7 @@ public:
 
 protected:
   /**
-   * Perform any object release functionality required to break reference 
+   * Perform any object release functionality required to break reference
    * cycles in reference counted objects held by the device.
    */
   virtual void DoDispose (void);
@@ -382,7 +382,7 @@ private:
    * channel to let it know that the physical device this class
    * represents has actually started sending signals, this causes the
    * channel to enter the BUSY state.  An event is scheduled for the time at
-   * which the bits have been completely transmitted. 
+   * which the bits have been completely transmitted.
    *
    * If the channel is found to be BUSY, this method reschedules itself for
    * execution at a later time (within the backoff period).
@@ -400,8 +400,8 @@ private:
    * the TransmitEnd method is called on the channel to let it know that the
    * physical device this class represents has finished sending simulated
    * signals.  The channel uses this event to begin its speed of light delay
-   * timer after which it notifies the Net Device(s) at the other end of the 
-   * link that new bits have arrived (it delivers the Packet).  During this 
+   * timer after which it notifies the Net Device(s) at the other end of the
+   * link that new bits have arrived (it delivers the Packet).  During this
    * method, the net device also schedules the TransmitReadyEvent at which
    * time the transmitter becomes ready to send the next packet.
    *
@@ -413,7 +413,7 @@ private:
   /**
    * Cause the Transmitter to Become Ready to Send Another Packet.
    *
-   * The TransmitReadyEvent method is used internally to re-enable the 
+   * The TransmitReadyEvent method is used internally to re-enable the
    * transmit machine of the net device.  It is scheduled after a suitable
    * interframe gap after the completion of the previous transmission.
    * The queue is checked at this time, and if there is a packet waiting on
@@ -440,12 +440,12 @@ private:
    */
   void NotifyLinkUp (void);
 
-  /** 
+  /**
    * Device ID returned by the attached functions. It is used by the
    * mp-channel to identify each net device to make sure that only
    * active net devices are writing to the channel
    */
-  uint32_t m_deviceId; 
+  uint32_t m_deviceId;
 
   /**
    * Enable net device to send packets. True by default
@@ -527,7 +527,7 @@ private:
 
   /**
    * Error model for receive packet events.  When active this model will be
-   * used to model transmission errors by marking some of the packets 
+   * used to model transmission errors by marking some of the packets
    * received as corrupt.
    */
   Ptr<ErrorModel> m_receiveErrorModel;
@@ -550,7 +550,7 @@ private:
 
   /**
    * The trace source fired for packets successfully received by the device
-   * immediately before being forwarded up to higher layers (at the L2/L3 
+   * immediately before being forwarded up to higher layers (at the L2/L3
    * transition).  This is a promiscuous trace.
    *
    * \see class CallBackTraceSource
@@ -559,7 +559,7 @@ private:
 
   /**
    * The trace source fired for packets successfully received by the device
-   * immediately before being forwarded up to higher layers (at the L2/L3 
+   * immediately before being forwarded up to higher layers (at the L2/L3
    * transition).  This is a non-promiscuous trace.
    *
    * \see class CallBackTraceSource
@@ -568,7 +568,7 @@ private:
 
   /**
    * The trace source fired for packets successfully received by the device
-   * but dropped before being forwarded up to higher layers (at the L2/L3 
+   * but dropped before being forwarded up to higher layers (at the L2/L3
    * transition).
    *
    * \see class CallBackTraceSource
@@ -632,19 +632,19 @@ private:
   TracedCallback<Ptr<const Packet> > m_phyRxDropTrace;
 
   /**
-   * A trace source that emulates a non-promiscuous protocol sniffer connected 
-   * to the device.  Unlike your average everyday sniffer, this trace source 
+   * A trace source that emulates a non-promiscuous protocol sniffer connected
+   * to the device.  Unlike your average everyday sniffer, this trace source
    * will not fire on PACKET_OTHERHOST events.
    *
    * On the transmit size, this trace hook will fire after a packet is dequeued
    * from the device queue for transmission.  In Linux, for example, this would
-   * correspond to the point just before a device hard_start_xmit where 
-   * dev_queue_xmit_nit is called to dispatch the packet to the PF_PACKET 
+   * correspond to the point just before a device hard_start_xmit where
+   * dev_queue_xmit_nit is called to dispatch the packet to the PF_PACKET
    * ETH_P_ALL handlers.
    *
    * On the receive side, this trace hook will fire when a packet is received,
-   * just before the receive callback is executed.  In Linux, for example, 
-   * this would correspond to the point at which the packet is dispatched to 
+   * just before the receive callback is executed.  In Linux, for example,
+   * this would correspond to the point at which the packet is dispatched to
    * packet sniffers in netif_receive_skb.
    *
    * \see class CallBackTraceSource
@@ -658,13 +658,13 @@ private:
    *
    * On the transmit size, this trace hook will fire after a packet is dequeued
    * from the device queue for transmission.  In Linux, for example, this would
-   * correspond to the point just before a device hard_start_xmit where 
-   * dev_queue_xmit_nit is called to dispatch the packet to the PF_PACKET 
+   * correspond to the point just before a device hard_start_xmit where
+   * dev_queue_xmit_nit is called to dispatch the packet to the PF_PACKET
    * ETH_P_ALL handlers.
    *
    * On the receive side, this trace hook will fire when a packet is received,
-   * just before the receive callback is executed.  In Linux, for example, 
-   * this would correspond to the point at which the packet is dispatched to 
+   * just before the receive callback is executed.  In Linux, for example,
+   * this would correspond to the point at which the packet is dispatched to
    * packet sniffers in netif_receive_skb.
    *
    * \see class CallBackTraceSource
@@ -692,7 +692,7 @@ private:
   NetDevice::PromiscReceiveCallback m_promiscRxCallback;
 
   /**
-   * The interface index (really net evice index) that has been assigned to 
+   * The interface index (really net evice index) that has been assigned to
    * this network device.
    */
   uint32_t m_ifIndex;
@@ -711,9 +711,9 @@ private:
   static const uint16_t DEFAULT_MTU = 1500;
 
   /**
-   * The Maximum Transmission Unit.  This corresponds to the maximum 
+   * The Maximum Transmission Unit.  This corresponds to the maximum
    * number of bytes that can be transmitted as seen from higher layers.
-   * This corresponds to the 1500 byte MTU size often seen on IP over 
+   * This corresponds to the 1500 byte MTU size often seen on IP over
    * Ethernet.
    */
   uint32_t m_mtu;
