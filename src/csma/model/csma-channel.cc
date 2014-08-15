@@ -1,6 +1,8 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
  * Copyright (c) 2007 Emmanuelle Laprise
+ * Copyright (c) 2012 Jeff Young
+ * Copyright (c) 2014 Murphy McCauley
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -16,6 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * Author: Emmanuelle Laprise <emmanuelle.laprise@bluekazoo.ca>
+ * Author: Jeff Young <jyoung9@gatech.edu>
+ * Author: Murphy McCauley <murphy.mccauley@gmail.com>
  */
 
 #include "csma-channel.h"
@@ -200,7 +204,7 @@ CsmaChannel::IsActive (uint32_t deviceId)
 }
 
 bool
-CsmaChannel::TransmitEnd ()
+CsmaChannel::TransmitEnd (uint32_t srcId)
 {
   NS_LOG_FUNCTION (this << m_currentPkt << m_currentSrc);
   NS_LOG_INFO ("UID is " << m_currentPkt->GetUid () << ")");
@@ -238,12 +242,12 @@ CsmaChannel::TransmitEnd ()
 
   // also schedule for the tx side to go back to IDLE
   Simulator::Schedule (m_delay, &CsmaChannel::PropagationCompleteEvent,
-                       this);
+                       this, srcId);
   return retVal;
 }
 
 void
-CsmaChannel::PropagationCompleteEvent ()
+CsmaChannel::PropagationCompleteEvent (uint32_t deviceId)
 {
   NS_LOG_FUNCTION (this << m_currentPkt);
   NS_LOG_INFO ("UID is " << m_currentPkt->GetUid () << ")");
@@ -304,7 +308,7 @@ CsmaChannel::GetDeviceNum (Ptr<CsmaNetDevice> device)
 }
 
 bool
-CsmaChannel::IsBusy (void)
+CsmaChannel::IsBusy (uint32_t deviceId)
 {
   if (m_state == IDLE)
     {
@@ -329,7 +333,7 @@ CsmaChannel::GetDelay (void)
 }
 
 WireState
-CsmaChannel::GetState (void)
+CsmaChannel::GetState (uint32_t deviceId)
 {
   return m_state;
 }
