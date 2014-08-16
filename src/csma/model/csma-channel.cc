@@ -106,7 +106,7 @@ CsmaChannel::Reattach (uint32_t deviceId)
 {
   NS_LOG_FUNCTION (this << deviceId);
 
-  if (deviceId < m_deviceList.size ())
+  if (deviceId >= m_deviceList.size ())
     {
       return false;
     }
