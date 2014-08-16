@@ -202,6 +202,10 @@ def register_types(module):
     module.add_class('AttributeChecker', allow_subclassing=False, automatic_type_narrowing=True, import_from_module='ns.core', parent=root_module['ns3::SimpleRefCount< ns3::AttributeChecker, ns3::empty, ns3::DefaultDeleter<ns3::AttributeChecker> >'])
     ## attribute.h (module 'core'): ns3::AttributeValue [class]
     module.add_class('AttributeValue', allow_subclassing=False, automatic_type_narrowing=True, import_from_module='ns.core', parent=root_module['ns3::SimpleRefCount< ns3::AttributeValue, ns3::empty, ns3::DefaultDeleter<ns3::AttributeValue> >'])
+    ## boolean.h (module 'core'): ns3::BooleanChecker [class]
+    module.add_class('BooleanChecker', import_from_module='ns.core', parent=root_module['ns3::AttributeChecker'])
+    ## boolean.h (module 'core'): ns3::BooleanValue [class]
+    module.add_class('BooleanValue', import_from_module='ns.core', parent=root_module['ns3::AttributeValue'])
     ## callback.h (module 'core'): ns3::CallbackChecker [class]
     module.add_class('CallbackChecker', import_from_module='ns.core', parent=root_module['ns3::AttributeChecker'])
     ## callback.h (module 'core'): ns3::CallbackImplBase [class]
@@ -427,6 +431,8 @@ def register_methods(root_module):
     register_Ns3AttributeAccessor_methods(root_module, root_module['ns3::AttributeAccessor'])
     register_Ns3AttributeChecker_methods(root_module, root_module['ns3::AttributeChecker'])
     register_Ns3AttributeValue_methods(root_module, root_module['ns3::AttributeValue'])
+    register_Ns3BooleanChecker_methods(root_module, root_module['ns3::BooleanChecker'])
+    register_Ns3BooleanValue_methods(root_module, root_module['ns3::BooleanValue'])
     register_Ns3CallbackChecker_methods(root_module, root_module['ns3::CallbackChecker'])
     register_Ns3CallbackImplBase_methods(root_module, root_module['ns3::CallbackImplBase'])
     register_Ns3CallbackValue_methods(root_module, root_module['ns3::CallbackValue'])
@@ -3863,6 +3869,47 @@ def register_Ns3AttributeValue_methods(root_module, cls):
                    is_pure_virtual=True, is_const=True, is_virtual=True)
     return
 
+def register_Ns3BooleanChecker_methods(root_module, cls):
+    ## boolean.h (module 'core'): ns3::BooleanChecker::BooleanChecker() [constructor]
+    cls.add_constructor([])
+    ## boolean.h (module 'core'): ns3::BooleanChecker::BooleanChecker(ns3::BooleanChecker const & arg0) [copy constructor]
+    cls.add_constructor([param('ns3::BooleanChecker const &', 'arg0')])
+    return
+
+def register_Ns3BooleanValue_methods(root_module, cls):
+    cls.add_output_stream_operator()
+    ## boolean.h (module 'core'): ns3::BooleanValue::BooleanValue(ns3::BooleanValue const & arg0) [copy constructor]
+    cls.add_constructor([param('ns3::BooleanValue const &', 'arg0')])
+    ## boolean.h (module 'core'): ns3::BooleanValue::BooleanValue() [constructor]
+    cls.add_constructor([])
+    ## boolean.h (module 'core'): ns3::BooleanValue::BooleanValue(bool value) [constructor]
+    cls.add_constructor([param('bool', 'value')])
+    ## boolean.h (module 'core'): ns3::Ptr<ns3::AttributeValue> ns3::BooleanValue::Copy() const [member function]
+    cls.add_method('Copy', 
+                   'ns3::Ptr< ns3::AttributeValue >', 
+                   [], 
+                   is_const=True, is_virtual=True)
+    ## boolean.h (module 'core'): bool ns3::BooleanValue::DeserializeFromString(std::string value, ns3::Ptr<ns3::AttributeChecker const> checker) [member function]
+    cls.add_method('DeserializeFromString', 
+                   'bool', 
+                   [param('std::string', 'value'), param('ns3::Ptr< ns3::AttributeChecker const >', 'checker')], 
+                   is_virtual=True)
+    ## boolean.h (module 'core'): bool ns3::BooleanValue::Get() const [member function]
+    cls.add_method('Get', 
+                   'bool', 
+                   [], 
+                   is_const=True)
+    ## boolean.h (module 'core'): std::string ns3::BooleanValue::SerializeToString(ns3::Ptr<ns3::AttributeChecker const> checker) const [member function]
+    cls.add_method('SerializeToString', 
+                   'std::string', 
+                   [param('ns3::Ptr< ns3::AttributeChecker const >', 'checker')], 
+                   is_const=True, is_virtual=True)
+    ## boolean.h (module 'core'): void ns3::BooleanValue::Set(bool value) [member function]
+    cls.add_method('Set', 
+                   'void', 
+                   [param('bool', 'value')])
+    return
+
 def register_Ns3CallbackChecker_methods(root_module, cls):
     ## callback.h (module 'core'): ns3::CallbackChecker::CallbackChecker() [constructor]
     cls.add_constructor([])
@@ -4026,6 +4073,11 @@ def register_Ns3CsmaChannel_methods(root_module, cls):
     cls.add_method('IsActive', 
                    'bool', 
                    [param('uint32_t', 'deviceId')])
+    ## csma-channel.h (module 'csma'): bool ns3::CsmaChannel::IsFullDuplex() const [member function]
+    cls.add_method('IsFullDuplex', 
+                   'bool', 
+                   [], 
+                   is_const=True)
     ## csma-channel.h (module 'csma'): uint32_t ns3::CsmaChannel::GetNumActDevices() [member function]
     cls.add_method('GetNumActDevices', 
                    'uint32_t', 

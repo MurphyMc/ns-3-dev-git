@@ -443,34 +443,42 @@ CsmaNetDevice::TransmitStart (void)
                  "Must be READY to transmit. Tx state is: " << m_txMachineState);
 
   //
-  // Now we have to sense the state of the medium and either start transmitting
-  // if it is idle, or backoff our transmission if someone else is on the wire.
+  // Now we sense the state of the medium.  If idle, we start transmitting.  If
+  // it's busy, we backoff/wait.
   //
   if(m_channel->GetState (m_deviceId) != IDLE)
     {
       //
-      // The channel is busy -- backoff and rechedule TransmitStart() unless
-      // we have exhausted all of our retries.
+      // The (sub)channel is busy.  If in half duplex mode, backoff and
+      // rechedule TransmitStart() unless we have exhausted all of our retries.
+      // If in full duplex mode, we don't need to do this.
       //
       m_txMachineState = BACKOFF;
 
-      if (m_backoff.MaxRetriesReached ())
+      if (m_channel->IsFullDuplex ())
         {
-          //
-          // Too many retries, abort transmission of packet
-          //
-          TransmitAbort ();
+          NS_LOG_LOGIC ("Channel busy!");
         }
       else
         {
-          m_macTxBackoffTrace (m_currentPkt);
+          if (m_backoff.MaxRetriesReached ())
+            {
+              //
+              // Too many retries, abort transmission of packet
+              //
+              TransmitAbort ();
+            }
+          else
+            {
+              m_macTxBackoffTrace (m_currentPkt);
 
-          m_backoff.IncrNumRetries ();
-          Time backoffTime = m_backoff.GetBackoffTime ();
+              m_backoff.IncrNumRetries ();
+              Time backoffTime = m_backoff.GetBackoffTime ();
 
-          NS_LOG_LOGIC ("Channel busy, backing off for " << backoffTime.GetSeconds () << " sec");
+              NS_LOG_LOGIC ("Channel busy, backing off for " << backoffTime.GetSeconds () << " sec");
 
-          Simulator::Schedule (backoffTime, &CsmaNetDevice::TransmitStart, this);
+              Simulator::Schedule (backoffTime, &CsmaNetDevice::TransmitStart, this);
+            }
         }
     }
   else
