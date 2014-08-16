@@ -335,6 +335,59 @@ private:
    * Current state of the channel
    */
   WireState     m_state;
+
+  /**
+   * \brief Gets current packet
+   *
+   * \param deviceId The ID that was assigned to the net device when
+   * it was attached to the channel.
+   *
+   * \return Device Id of the source that is currently transmitting on the
+   * channel. Or last source to have transmitted a packet on the
+   * channel, if the channel is currently not busy.
+   */
+  Ptr<Packet> GetCurrentPkt (uint32_t deviceId);
+
+  /**
+   * \brief Sets the current packet
+   *
+   * \param deviceId The ID that was assigned to the net device when
+   * it was attached to the channel.
+   * \param The Packet that is current being transmitted by deviceId (or last
+   * packet to have been transmitted on the channel if the channel is free.)
+   */
+  void SetCurrentPkt (uint32_t deviceId, Ptr<Packet> pkt);
+
+  /**
+   * \brief Gets current transmitter
+   *
+   * \param deviceId The ID that was assigned to the net device when
+   * it was attached to the channel.
+   *
+   * \return Device Id of the source that is currently transmitting on the
+   * channel. Or last source to have transmitted a packet on the
+   * channel, if the channel is currently not busy.
+   */
+  uint32_t GetCurrentSrc (uint32_t deviceId);
+
+  /**
+   * \brief Sets the current transmitter
+   *
+   * \param deviceId The ID that was assigned to the net device when
+   * it was attached to the channel.
+   * \param transmitterId The ID of the transmitting device.
+   */
+  void SetCurrentSrc (uint32_t deviceId, uint32_t transmitterId);
+
+  /**
+   * \brief Sets the state of the channel
+   *
+   * \param deviceId The ID that was assigned to the net device when
+   * it was attached to the channel.
+   * \param state The new channel state.
+   */
+  void SetState (uint32_t deviceId, WireState state);
+
 };
 
 } // namespace ns3

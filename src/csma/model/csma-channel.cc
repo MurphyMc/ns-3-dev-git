@@ -58,7 +58,6 @@ CsmaChannel::CsmaChannel ()
     Channel ()
 {
   NS_LOG_FUNCTION_NOARGS ();
-  m_state = IDLE;
   m_deviceList.clear ();
 }
 
@@ -77,6 +76,8 @@ CsmaChannel::Attach (Ptr<CsmaNetDevice> device)
   CsmaDeviceRec rec (device);
 
   m_deviceList.push_back (rec);
+  SetState (m_deviceList.size () - 1, IDLE);
+  SetCurrentSrc (m_deviceList.size () - 1, m_deviceList.size () - 1);
   return (m_deviceList.size () - 1);
 }
 
@@ -141,7 +142,7 @@ CsmaChannel::Detach (uint32_t deviceId)
 
       m_deviceList[deviceId].active = false;
 
-      if ((m_state == TRANSMITTING) && (m_currentSrc == deviceId))
+      if ((GetState (deviceId) == TRANSMITTING) && (GetCurrentSrc (deviceId) == deviceId))
         {
           NS_LOG_WARN ("CsmaChannel::Detach(): Device is currently" << "transmitting (" << deviceId << ")");
         }
@@ -178,7 +179,7 @@ CsmaChannel::TransmitStart (Ptr<Packet> p, uint32_t srcId)
   NS_LOG_FUNCTION (this << p << srcId);
   NS_LOG_INFO ("UID is " << p->GetUid () << ")");
 
-  if (m_state != IDLE)
+  if (GetState (srcId) != IDLE)
     {
       NS_LOG_WARN ("CsmaChannel::TransmitStart(): State is not IDLE");
       return false;
@@ -191,9 +192,9 @@ CsmaChannel::TransmitStart (Ptr<Packet> p, uint32_t srcId)
     }
 
   NS_LOG_LOGIC ("switch to TRANSMITTING");
-  m_currentPkt = p;
-  m_currentSrc = srcId;
-  m_state = TRANSMITTING;
+  SetCurrentPkt (srcId, p);
+  SetCurrentSrc (srcId, srcId);
+  SetState (srcId, TRANSMITTING);
   return true;
 }
 
@@ -206,15 +207,15 @@ CsmaChannel::IsActive (uint32_t deviceId)
 bool
 CsmaChannel::TransmitEnd (uint32_t srcId)
 {
-  NS_LOG_FUNCTION (this << m_currentPkt << m_currentSrc);
-  NS_LOG_INFO ("UID is " << m_currentPkt->GetUid () << ")");
+  NS_LOG_FUNCTION (this << GetCurrentPkt (srcId) << GetCurrentSrc (srcId));
+  NS_LOG_INFO ("UID is " << GetCurrentPkt (srcId)->GetUid () << ")");
 
-  NS_ASSERT (m_state == TRANSMITTING);
-  m_state = PROPAGATING;
+  NS_ASSERT (GetState (srcId) == TRANSMITTING);
+  SetState (srcId, PROPAGATING);
 
   bool retVal = true;
 
-  if (!IsActive (m_currentSrc))
+  if (!IsActive (GetCurrentSrc (srcId)))
     {
       NS_LOG_ERROR ("CsmaChannel::TransmitEnd(): Seclected source was detached before the end of the transmission");
       retVal = false;
@@ -235,7 +236,7 @@ CsmaChannel::TransmitEnd (uint32_t srcId)
           Simulator::ScheduleWithContext (it->devicePtr->GetNode ()->GetId (),
                                           m_delay,
                                           &CsmaNetDevice::Receive, it->devicePtr,
-                                          m_currentPkt->Copy (), m_deviceList[m_currentSrc].devicePtr);
+                                          GetCurrentPkt (srcId)->Copy (), m_deviceList[GetCurrentSrc (srcId)].devicePtr);
         }
       devId++;
     }
@@ -249,11 +250,11 @@ CsmaChannel::TransmitEnd (uint32_t srcId)
 void
 CsmaChannel::PropagationCompleteEvent (uint32_t deviceId)
 {
-  NS_LOG_FUNCTION (this << m_currentPkt);
-  NS_LOG_INFO ("UID is " << m_currentPkt->GetUid () << ")");
+  NS_LOG_FUNCTION (this << GetCurrentPkt (deviceId));
+  NS_LOG_INFO ("UID is " << GetCurrentPkt (deviceId)->GetUid () << ")");
 
-  NS_ASSERT (m_state == PROPAGATING);
-  m_state = IDLE;
+  NS_ASSERT (GetState (deviceId) == PROPAGATING);
+  SetState (deviceId, IDLE);
 }
 
 uint32_t
@@ -310,7 +311,7 @@ CsmaChannel::GetDeviceNum (Ptr<CsmaNetDevice> device)
 bool
 CsmaChannel::IsBusy (uint32_t deviceId)
 {
-  if (m_state == IDLE)
+  if (GetState (deviceId) == IDLE)
     {
       return false;
     }
@@ -342,6 +343,36 @@ Ptr<NetDevice>
 CsmaChannel::GetDevice (uint32_t i) const
 {
   return GetCsmaDevice (i);
+}
+
+Ptr<Packet>
+CsmaChannel::GetCurrentPkt (uint32_t deviceId)
+{
+  return m_currentPkt;
+}
+
+void
+CsmaChannel::SetCurrentPkt (uint32_t deviceId, Ptr<Packet> pkt)
+{
+  m_currentPkt = pkt;
+}
+
+uint32_t
+CsmaChannel::GetCurrentSrc (uint32_t deviceId)
+{
+  return m_currentSrc;
+}
+
+void
+CsmaChannel::SetCurrentSrc (uint32_t deviceId, uint32_t transmitterId)
+{
+  m_currentSrc = transmitterId;
+}
+
+void
+CsmaChannel::SetState (uint32_t deviceId, WireState state)
+{
+  m_state = state;
 }
 
 CsmaDeviceRec::CsmaDeviceRec ()
