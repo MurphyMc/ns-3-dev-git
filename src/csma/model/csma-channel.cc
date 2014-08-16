@@ -49,6 +49,11 @@ CsmaChannel::GetTypeId (void)
                    TimeValue (Seconds (0)),
                    MakeTimeAccessor (&CsmaChannel::m_delay),
                    MakeTimeChecker ())
+    .AddAttribute ("FullDuplex", "Whether the channel is full duplex",
+                   TypeId::ATTR_CONSTRUCT,
+                   BooleanValue (false),
+                   MakeBooleanAccessor (&CsmaChannel::m_fullDuplex),
+                   MakeBooleanChecker ())
   ;
   return tid;
 }
@@ -72,6 +77,14 @@ CsmaChannel::Attach (Ptr<CsmaNetDevice> device)
 {
   NS_LOG_FUNCTION (this << device);
   NS_ASSERT (device != 0);
+
+  // For full-duplex links we can only attach two devices to a channel
+  // since there is no backoff
+  if (m_fullDuplex && m_deviceList.size () > 2)
+    {
+      NS_LOG_DEBUG ("Falling back to half-duplex");
+      m_fullDuplex = false;
+    }
 
   CsmaDeviceRec rec (device);
 
@@ -202,6 +215,12 @@ bool
 CsmaChannel::IsActive (uint32_t deviceId)
 {
   return (m_deviceList[deviceId].active);
+}
+
+bool
+CsmaChannel::IsFullDuplex (void) const
+{
+  return m_fullDuplex;
 }
 
 bool

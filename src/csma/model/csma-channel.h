@@ -29,6 +29,7 @@
 #include "ns3/ptr.h"
 #include "ns3/nstime.h"
 #include "ns3/data-rate.h"
+#include "ns3/boolean.h"
 
 namespace ns3 {
 
@@ -244,6 +245,14 @@ public:
   bool IsActive (uint32_t deviceId);
 
   /**
+   * \brief Indicates if channel is operating in full duplex mode.
+   *
+   * \return Returns true if channel is in full duplex mode, false if in
+   * half duplex mode.
+   */
+  bool IsFullDuplex (void) const;
+
+  /**
    * \return Returns the number of net devices that are currently
    * attached to the channel.
    */
@@ -303,6 +312,11 @@ private:
    * The assigned speed-of-light delay of the channel
    */
   Time          m_delay;
+
+  /**
+   * Whether the channel is in full duplex mode
+   */
+  bool          m_fullDuplex;
 
   /**
    * List of the net devices that have been or are currently connected
