@@ -76,7 +76,11 @@ enum WireState
  * when many nodes are connected to one wire. It uses a single busy
  * flag to indicate if the channel is currently in use. It does not
  * take into account the distances between stations or the speed of
- * light to determine collisions.
+ * light to determine collisions.  Optionally, it allows for full-
+ * duplex operation when there are only two attached nodes.  To
+ * implement full duplex, we internally keep two "subchannels"
+ * (one for each attached node).  When in half duplex mode, only
+ * the first subchannel is used.
  */
 class CsmaChannel : public Channel
 {
@@ -332,23 +336,25 @@ private:
   std::vector<CsmaDeviceRec> m_deviceList;
 
   /**
-   * The Packet that is currently being transmitted on the channel (or last
-   * packet to have been transmitted on the channel if the channel is
-   * free.)
+   * The Packet that is currently being transmitted on the subchannel (or the
+   * last packet to have been transmitted if the subchannel is free).  In
+   * half duplex mode, only the first subchannel is used.
    */
-  Ptr<Packet>   m_currentPkt;
+  Ptr<Packet>   m_currentPkt[2];
 
   /**
    * Device Id of the source that is currently transmitting on the
-   * channel. Or last source to have transmitted a packet on the
-   * channel, if the channel is currently not busy.
+   * subchannel, or the last source to have transmitted a packet on the
+   * subchannel, if it is not currently busy.  In half duplex mode,
+   * only the first subchannel is used.
    */
-  uint32_t      m_currentSrc;
+  uint32_t      m_currentSrc[2];
 
   /**
-   * Current state of the channel
+   * Current state of each subchannel.  In half duplex mode, only the
+   * first subchannel is used.
    */
-  WireState     m_state;
+  WireState     m_state[2];
 
   /**
    * \brief Gets current packet
@@ -357,8 +363,8 @@ private:
    * it was attached to the channel.
    *
    * \return Device Id of the source that is currently transmitting on the
-   * channel. Or last source to have transmitted a packet on the
-   * channel, if the channel is currently not busy.
+   * subchannel or the last source to have transmitted a packet on the
+   * subchannel, if it is not currently busy.
    */
   Ptr<Packet> GetCurrentPkt (uint32_t deviceId);
 

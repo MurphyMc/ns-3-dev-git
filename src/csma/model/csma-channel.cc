@@ -249,13 +249,17 @@ CsmaChannel::TransmitEnd (uint32_t srcId)
   uint32_t devId = 0;
   for (it = m_deviceList.begin (); it < m_deviceList.end (); it++)
     {
-      if (it->IsActive ())
+      // In full duplex mode, don't deliver to sender
+      if (!m_fullDuplex || (devId != GetCurrentSrc (srcId)))
         {
-          // schedule reception events
-          Simulator::ScheduleWithContext (it->devicePtr->GetNode ()->GetId (),
-                                          m_delay,
-                                          &CsmaNetDevice::Receive, it->devicePtr,
-                                          GetCurrentPkt (srcId)->Copy (), m_deviceList[GetCurrentSrc (srcId)].devicePtr);
+          if (it->IsActive ())
+            {
+              // schedule reception events
+              Simulator::ScheduleWithContext (it->devicePtr->GetNode ()->GetId (),
+                                              m_delay,
+                                              &CsmaNetDevice::Receive, it->devicePtr,
+                                              GetCurrentPkt (srcId)->Copy (), m_deviceList[GetCurrentSrc (srcId)].devicePtr);
+            }
         }
       devId++;
     }
@@ -355,7 +359,7 @@ CsmaChannel::GetDelay (void)
 WireState
 CsmaChannel::GetState (uint32_t deviceId)
 {
-  return m_state;
+  return m_state[m_fullDuplex ? deviceId : 0];
 }
 
 Ptr<NetDevice>
@@ -367,31 +371,31 @@ CsmaChannel::GetDevice (uint32_t i) const
 Ptr<Packet>
 CsmaChannel::GetCurrentPkt (uint32_t deviceId)
 {
-  return m_currentPkt;
+  return m_currentPkt[m_fullDuplex ? deviceId : 0];
 }
 
 void
 CsmaChannel::SetCurrentPkt (uint32_t deviceId, Ptr<Packet> pkt)
 {
-  m_currentPkt = pkt;
+  m_currentPkt[m_fullDuplex ? deviceId : 0] = pkt;
 }
 
 uint32_t
 CsmaChannel::GetCurrentSrc (uint32_t deviceId)
 {
-  return m_currentSrc;
+  return m_currentSrc[m_fullDuplex ? deviceId : 0];
 }
 
 void
 CsmaChannel::SetCurrentSrc (uint32_t deviceId, uint32_t transmitterId)
 {
-  m_currentSrc = transmitterId;
+  m_currentSrc[m_fullDuplex ? deviceId : 0] = transmitterId;
 }
 
 void
 CsmaChannel::SetState (uint32_t deviceId, WireState state)
 {
-  m_state = state;
+  m_state[m_fullDuplex ? deviceId : 0] = state;
 }
 
 CsmaDeviceRec::CsmaDeviceRec ()
