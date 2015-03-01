@@ -708,13 +708,18 @@ class Visualizer(gobject.GObject):
 
         def load_button_icon(button, icon_name):
             try:
-                import gnomedesktop
-            except ImportError:
-                sys.stderr.write("Could not load icon %s due to missing gnomedesktop Python module\n" % icon_name)
-            else:
-                icon = gnomedesktop.find_icon(gtk.icon_theme_get_default(), icon_name, 16, 0)
-                if icon is not None:
-                    button.props.image = gobject.new(gtk.Image, file=icon, visible=True)
+                theme = gtk.icon_theme_get_default()
+                icon = theme.lookup_icon(icon_name, 16, 0).get_filename()
+                button.props.image = gobject.new(gtk.Image, file=icon, visible=True)
+            except:
+                try:
+                    import gnomedesktop
+                except ImportError:
+                    sys.stderr.write("Error loading icon %s\n" % icon_name)
+                else:
+                    icon = gnomedesktop.find_icon(gtk.icon_theme_get_default(), icon_name, 16, 0)
+                    if icon is not None:
+                        button.props.image = gobject.new(gtk.Image, file=icon, visible=True)
 
         load_button_icon(screenshot_button, "applets-screenshooter")
         screenshot_button.connect("clicked", self._take_screenshot)
