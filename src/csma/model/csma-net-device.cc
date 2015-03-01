@@ -456,7 +456,7 @@ CsmaNetDevice::TransmitStart (void)
   //
   // Only transmit if the send side of net device is enabled
   //
-  if (IsSendEnabled () == false)
+  if (IsSendEnabled () == false || IsLinkUp() == false)
     {
       m_phyTxDropTrace (m_currentPkt);
       m_currentPkt = 0;
@@ -844,7 +844,9 @@ void
 CsmaNetDevice::NotifyLinkUp (void)
 {
   NS_LOG_FUNCTION_NOARGS ();
-  m_linkUp = true;
+  bool up = IsLinkUp ();
+  if (up == m_linkUp) return;
+  m_linkUp = up;
   m_linkChangeCallbacks ();
 }
 
@@ -887,7 +889,7 @@ bool
 CsmaNetDevice::IsLinkUp (void) const
 {
   NS_LOG_FUNCTION_NOARGS ();
-  return m_linkUp;
+  return m_channel && m_channel->IsUp();
 }
 
 void
@@ -964,7 +966,7 @@ CsmaNetDevice::SendFrom (Ptr<Packet> packet, const Address& src, const Address& 
   NS_LOG_LOGIC ("UID is " << packet->GetUid () << ")");
   NS_LOG_LOGIC ("Device ID is " << m_deviceId);
 
-  NS_ASSERT (IsLinkUp ());
+  if (!IsLinkUp ()) return false;
 
   //
   // Only transmit if send side of net device is enabled

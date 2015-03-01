@@ -57,6 +57,8 @@ class ErrorModel;
  */
 class CsmaNetDevice : public NetDevice
 {
+  friend class CsmaChannel; // For call to NotifyLinkUp
+
 public:
   static TypeId GetTypeId (void);
 
@@ -436,7 +438,7 @@ private:
   void TransmitAbort (void);
 
   /**
-   * Notify any interested parties that the link has come up.
+   * Notify any interested parties that the link has come or gone down.
    */
   void NotifyLinkUp (void);
 

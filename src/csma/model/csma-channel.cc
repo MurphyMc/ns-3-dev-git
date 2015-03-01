@@ -54,6 +54,10 @@ CsmaChannel::GetTypeId (void)
                    BooleanValue (false),
                    MakeBooleanAccessor (&CsmaChannel::m_fullDuplex),
                    MakeBooleanChecker ())
+    .AddAttribute ("Up", "Whether the channel is up",
+                   BooleanValue (true),
+                   MakeBooleanAccessor (&CsmaChannel::m_isUp),
+                   MakeBooleanChecker ())
   ;
   return tid;
 }
@@ -204,11 +208,34 @@ CsmaChannel::TransmitStart (Ptr<Packet> p, uint32_t srcId)
       return false;
     }
 
+  if (!IsUp ())
+    {
+      return false;
+    }
+
   NS_LOG_LOGIC ("switch to TRANSMITTING");
   SetCurrentPkt (srcId, p);
   SetCurrentSrc (srcId, srcId);
   SetState (srcId, TRANSMITTING);
   return true;
+}
+
+bool
+CsmaChannel::IsUp (void) const
+{
+  return m_isUp;
+}
+
+void
+CsmaChannel::SetUp (bool up)
+{
+  m_isUp = up;
+
+  std::vector<CsmaDeviceRec>::iterator it;
+  for (it = m_deviceList.begin (); it < m_deviceList.end (); it++)
+    {
+      it->devicePtr->NotifyLinkUp ();
+    }
 }
 
 bool

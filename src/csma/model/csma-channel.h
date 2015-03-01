@@ -249,6 +249,16 @@ public:
   bool IsActive (uint32_t deviceId);
 
   /**
+   * \brief Indicates if the channel is currently up.
+   */
+  bool IsUp (void) const;
+
+  /**
+   * \brief Sets the channel up or down.
+   */
+  void SetUp (bool up);
+
+  /**
    * \brief Indicates if channel is operating in full duplex mode.
    *
    * \return Returns true if channel is in full duplex mode, false if in
@@ -321,6 +331,11 @@ private:
    * Whether the channel is in full duplex mode
    */
   bool          m_fullDuplex;
+
+  /**
+   * Whether the channel is up or not
+   */
+  bool          m_isUp;
 
   /**
    * List of the net devices that have been or are currently connected
