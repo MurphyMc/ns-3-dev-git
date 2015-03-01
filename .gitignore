@@ -1,0 +1,16 @@
+.*
+*.patch
+*.diff
+*.tr
+*.pcap
+*.pyc
+*.pyo
+*.old
+*.bak
+**/modulegen__gcc_LP64.py
+**/modulegen__gcc_ILP32.py
+build/*
+src/axe
+src/pyns
+src/pypyns
+src/labelswitch
