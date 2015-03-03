@@ -32,6 +32,43 @@ GtkConfigStore::GtkConfigStore ()
 {
 }
 
+std::string
+get_sort_key (ModelTypeid * node)
+{
+  switch (node->type)
+    {
+    case ModelTypeid::NODE_TYPEID:
+      return node->tid.GetName ();
+    case ModelTypeid::NODE_ATTRIBUTE:
+      // We just return an empty string here so that all attributes compare
+      // as equal.  This way they come up in the order they were defined.
+      // If we wanted to alphebetize them, we'd return node->name.
+      return "";
+      //return node->name;
+    }
+  return ""; // Shouldn't happen
+}
+
+gint
+compare_modeltypeid (GtkTreeModel *model,
+                     GtkTreeIter  *a,
+                     GtkTreeIter  *b,
+                     gpointer     userdata)
+{
+  ModelTypeid *n1, *n2;
+
+  gtk_tree_model_get(model, a, 0, &n1, -1);
+  gtk_tree_model_get(model, b, 0, &n2, -1);
+
+  if (!n1 || !n2)
+    {
+      if (!n1 && !n2) return 0;
+      return (n2) ? -1 : 1;
+    }
+
+  return get_sort_key(n1).compare(get_sort_key(n2));
+}
+
 void
 GtkConfigStore::ConfigureDefaults (void)
 {
@@ -50,6 +87,10 @@ GtkConfigStore::ConfigureDefaults (void)
   GtkTreeStore *model = gtk_tree_store_new (COL_LAST, G_TYPE_POINTER);
   ModelTypeidCreator creator;
   creator.Build (model);
+
+  GtkTreeSortable *sortable = GTK_TREE_SORTABLE(model);
+  gtk_tree_sortable_set_sort_func(sortable, 0, compare_modeltypeid, 0, NULL);
+  gtk_tree_sortable_set_sort_column_id(sortable, 0, GTK_SORT_ASCENDING);
 
   view = create_view_config_default (model);
   scroll = gtk_scrolled_window_new (0, 0);
