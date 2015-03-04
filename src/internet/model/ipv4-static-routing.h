@@ -31,6 +31,7 @@
 #include "ns3/ptr.h"
 #include "ns3/ipv4.h"
 #include "ns3/ipv4-routing-protocol.h"
+#include "ns3/random-variable-stream.h"
 
 namespace ns3 {
 
@@ -400,12 +401,26 @@ private:
   typedef std::list<Ipv4MulticastRoutingTableEntry *>::iterator MulticastRoutesI;
 
   /**
+   * \brief Hash the L3 and L4 headers for ECMP spreading
+   *
+   * Based on a five-tuple in given L3 and L4 headers, this method returns a
+   * single value which can be used to select one of several ECMP possibilities.
+   * It assumes that if a transport protocol value is specified in the header,
+   * that a transport header with port numbers is prepended to the ipPayload
+   *
+   * \return A single value based on values within the headers
+   */
+  uint32_t HashHeaders (const Ipv4Header &header, Ptr<const Packet> ipPayload);
+
+  /**
    * \brief Lookup in the forwarding table for destination.
    * \param dest destination address
    * \param oif output interface if any (put 0 otherwise)
    * \return Ipv4Route to route the packet to reach dest address
    */
-  Ptr<Ipv4Route> LookupStatic (Ipv4Address dest, Ptr<NetDevice> oif = 0);
+  Ptr<Ipv4Route> LookupStatic (const Ipv4Header &header,
+                               Ptr<const Packet> ipPayload,
+                               Ptr<NetDevice> oif = 0);
 
   /**
    * \brief Lookup in the multicast forwarding table for destination.
@@ -439,6 +454,27 @@ private:
    * \brief Ipv4 reference.
    */
   Ptr<Ipv4> m_ipv4;
+
+  /**
+   * \brief Whether random packet spreading for ECMP is enabled
+   *
+   * This is one of two possible ECMP modes (the other being
+   * m_flowEcmpRouting).  If both are false, a single route is used
+   * consistently.  Note that at most one ECMP mode can be true.
+   */
+  bool m_randomEcmpRouting;
+
+  /**
+   * \brief Whether flow-based spreading for ECMP is enabled
+   *
+   * This is one of two possible ECMP modes (the other being
+   * m_flowEcmpRouting).  If both are false, a single route is used
+   * consistently.  Note that at most one ECMP mode can be true.
+   */
+  bool m_flowEcmpRouting;
+
+  /// A uniform random number generator for randomly routing among ECMP
+  UniformRandomVariable m_rand;
 };
 
 } // Namespace ns3

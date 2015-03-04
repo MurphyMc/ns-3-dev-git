@@ -25,11 +25,15 @@
 
 #include <iomanip>
 #include "ns3/log.h"
+#include "ns3/abort.h"
 #include "ns3/names.h"
 #include "ns3/packet.h"
 #include "ns3/node.h"
 #include "ns3/simulator.h"
 #include "ns3/ipv4-route.h"
+#include "ns3/udp-header.h"
+#include "ns3/tcp-header.h"
+#include "ns3/boolean.h"
 #include "ns3/output-stream-wrapper.h"
 #include "ipv4-static-routing.h"
 #include "ipv4-routing-table-entry.h"
@@ -42,18 +46,36 @@ NS_LOG_COMPONENT_DEFINE ("Ipv4StaticRouting");
 
 NS_OBJECT_ENSURE_REGISTERED (Ipv4StaticRouting);
 
+/* see http://www.iana.org/assignments/protocol-numbers */
+const uint8_t TCP_PROT_NUMBER = 6;
+const uint8_t UDP_PROT_NUMBER = 17;
+
 TypeId
 Ipv4StaticRouting::GetTypeId (void)
 {
   static TypeId tid = TypeId ("ns3::Ipv4StaticRouting")
     .SetParent<Ipv4RoutingProtocol> ()
     .AddConstructor<Ipv4StaticRouting> ()
+    .AddAttribute ("RandomEcmpRouting",
+                   "Set to true if packets are randomly routed among ECMP; set "
+                    "to false for using only one route consistently",
+                   BooleanValue(false),
+                   MakeBooleanAccessor (&Ipv4StaticRouting::m_randomEcmpRouting),
+                   MakeBooleanChecker ())
+    .AddAttribute ("FlowEcmpRouting",
+                   "Set to true if flows are randomly routed among ECMP; set "
+                    "to false for using only one route consistently",
+                   BooleanValue (false),
+                   MakeBooleanAccessor (&Ipv4StaticRouting::m_flowEcmpRouting),
+                   MakeBooleanChecker ())
   ;
   return tid;
 }
 
 Ipv4StaticRouting::Ipv4StaticRouting () 
-  : m_ipv4 (0)
+  : m_ipv4 (0),
+    m_randomEcmpRouting (false),
+    m_flowEcmpRouting (false)
 {
   NS_LOG_FUNCTION (this);
 }
@@ -218,26 +240,70 @@ Ipv4StaticRouting::RemoveMulticastRoute (uint32_t index)
     }
 }
 
-Ptr<Ipv4Route>
-Ipv4StaticRouting::LookupStatic (Ipv4Address dest, Ptr<NetDevice> oif)
+uint32_t
+Ipv4StaticRouting::HashHeaders (const Ipv4Header &header,
+                                Ptr<const Packet> ipPayload)
 {
-  NS_LOG_FUNCTION (this << dest << " " << oif);
-  Ptr<Ipv4Route> rtentry = 0;
-  uint16_t longest_mask = 0;
-  uint32_t shortest_metric = 0xffffffff;
+  // We do not care if this value rolls over
+  uint32_t tupleValue = header.GetSource ().Get () +
+                        header.GetDestination ().Get () +
+                        header.GetProtocol ();
+  switch (header.GetProtocol ())
+    {
+    case UDP_PROT_NUMBER:
+      {
+        UdpHeader udpHeader;
+        ipPayload->PeekHeader (udpHeader);
+        NS_LOG_DEBUG ("Found UDP proto and header: " <<
+                       udpHeader.GetSourcePort () << ":" <<
+                       udpHeader.GetDestinationPort ());
+        tupleValue += udpHeader.GetSourcePort ();
+        tupleValue += udpHeader.GetDestinationPort ();
+        break;
+      }
+    case TCP_PROT_NUMBER:
+      {
+        TcpHeader tcpHeader;
+        ipPayload->PeekHeader (tcpHeader);
+        NS_LOG_DEBUG ("Found TCP proto and header: " <<
+                       tcpHeader.GetSourcePort () << ":" <<
+                       tcpHeader.GetDestinationPort ());
+        tupleValue += tcpHeader.GetSourcePort ();
+        tupleValue += tcpHeader.GetDestinationPort ();
+        break;
+      }
+    default:
+      {
+        NS_LOG_DEBUG ("Udp or Tcp header not found");
+        break;
+      }
+    }
+  return tupleValue;
+}
+
+Ptr<Ipv4Route>
+Ipv4StaticRouting::LookupStatic (const Ipv4Header &header, Ptr<const Packet> ipPayload, Ptr<NetDevice> oif)
+{
+  NS_LOG_FUNCTION (this << header.GetDestination () << " " << oif);
+  NS_ABORT_MSG_IF (m_randomEcmpRouting && m_flowEcmpRouting, "Ecmp mode selection");
+
   /* when sending on local multicast, there have to be interface specified */
-  if (dest.IsLocalMulticast ())
+  if (header.GetDestination ().IsLocalMulticast ())
     {
       NS_ASSERT_MSG (oif, "Try to send on link-local multicast address, and no interface index is given!");
 
-      rtentry = Create<Ipv4Route> ();
-      rtentry->SetDestination (dest);
+      Ptr<Ipv4Route> rtentry = Create<Ipv4Route> ();
+      rtentry->SetDestination (header.GetDestination ());
       rtentry->SetGateway (Ipv4Address::GetZero ());
       rtentry->SetOutputDevice (oif);
       rtentry->SetSource (m_ipv4->GetAddress (oif->GetIfIndex (), 0).GetLocal ());
       return rtentry;
     }
 
+  uint16_t longest_mask = 0;
+  uint32_t shortest_metric = 0xffffffff;
+  typedef std::vector<Ipv4RoutingTableEntry*> RouteVec_t;
+  RouteVec_t allRoutes;
 
   for (NetworkRoutesI i = m_networkRoutes.begin (); 
        i != m_networkRoutes.end (); 
@@ -248,8 +314,8 @@ Ipv4StaticRouting::LookupStatic (Ipv4Address dest, Ptr<NetDevice> oif)
       Ipv4Mask mask = (j)->GetDestNetworkMask ();
       uint16_t masklen = mask.GetPrefixLength ();
       Ipv4Address entry = (j)->GetDestNetwork ();
-      NS_LOG_LOGIC ("Searching for route to " << dest << ", checking against route to " << entry << "/" << masklen);
-      if (mask.IsMatch (dest, entry)) 
+      NS_LOG_LOGIC ("Searching for route to " << header.GetDestination () << ", checking against route to " << entry << "/" << masklen);
+      if (mask.IsMatch (header.GetDestination (), entry))
         {
           NS_LOG_LOGIC ("Found global network route " << j << ", mask length " << masklen << ", metric " << metric);
           if (oif != 0)
@@ -268,6 +334,7 @@ Ipv4StaticRouting::LookupStatic (Ipv4Address dest, Ptr<NetDevice> oif)
           if (masklen > longest_mask) // Reset metric if longer masklen
             {
               shortest_metric = 0xffffffff;
+              allRoutes.clear();
             }
           longest_mask = masklen;
           if (metric > shortest_metric)
@@ -275,24 +342,47 @@ Ipv4StaticRouting::LookupStatic (Ipv4Address dest, Ptr<NetDevice> oif)
               NS_LOG_LOGIC ("Equal mask length, but previous metric shorter, skipping");
               continue;
             }
+          if (metric < shortest_metric)
+            {
+              allRoutes.clear();
+            }
           shortest_metric = metric;
-          Ipv4RoutingTableEntry* route = (j);
-          uint32_t interfaceIdx = route->GetInterface ();
-          rtentry = Create<Ipv4Route> ();
-          rtentry->SetDestination (route->GetDest ());
-          rtentry->SetSource (SourceAddressSelection (interfaceIdx, route->GetDest ()));
-          rtentry->SetGateway (route->GetGateway ());
-          rtentry->SetOutputDevice (m_ipv4->GetNetDevice (interfaceIdx));
+          allRoutes.push_back (j);
         }
     }
-  if (rtentry != 0)
+  if (allRoutes.size () == 0)
     {
-      NS_LOG_LOGIC ("Matching route via " << rtentry->GetGateway () << " at the end");
+      NS_LOG_LOGIC ("No matching route to " << header.GetDestination () << " found");
+      return 0;
+    }
+
+  // pick up one of the routes uniformly at random if random
+  // ECMP routing is enabled, or always select the first route
+  // consistently if random ECMP routing is disabled
+  uint32_t selectIndex;
+  if (m_randomEcmpRouting)
+    {
+      selectIndex = m_rand.GetInteger (0, allRoutes.size ()-1);
+    }
+  else if (m_flowEcmpRouting && (allRoutes.size () > 1))
+    {
+      selectIndex = HashHeaders (header, ipPayload) & allRoutes.size ();
     }
   else
     {
-      NS_LOG_LOGIC ("No matching route to " << dest << " found");
+      selectIndex = 0;
     }
+  Ipv4RoutingTableEntry* route = allRoutes.at (selectIndex);
+  uint32_t interfaceIdx = route->GetInterface ();
+  // create a Ipv4Route object from the selected routing table entry
+  Ptr<Ipv4Route> rtentry = Create<Ipv4Route> ();
+  rtentry->SetDestination (route->GetDest ());
+  rtentry->SetDestination (route->GetDest ());
+  rtentry->SetSource (SourceAddressSelection (interfaceIdx, route->GetDest ()));
+  rtentry->SetGateway (route->GetGateway ());
+  rtentry->SetOutputDevice (m_ipv4->GetNetDevice (interfaceIdx));
+
+  NS_LOG_LOGIC ("Matching route via " << rtentry->GetGateway () << " at the end");
   return rtentry;
 }
 
@@ -469,7 +559,7 @@ Ipv4StaticRouting::RouteOutput (Ptr<Packet> p, const Ipv4Header &header, Ptr<Net
       // So, we just log it and fall through to LookupStatic ()
       NS_LOG_LOGIC ("RouteOutput()::Multicast destination");
     }
-  rtentry = LookupStatic (destination, oif);
+  rtentry = LookupStatic (header, p, oif);
   if (rtentry)
     { 
       sockerr = Socket::ERROR_NOTERROR;
@@ -563,7 +653,7 @@ Ipv4StaticRouting::RouteInput  (Ptr<const Packet> p, const Ipv4Header &ipHeader,
       return false;
     }
   // Next, try to find a route
-  Ptr<Ipv4Route> rtentry = LookupStatic (ipHeader.GetDestination ());
+  Ptr<Ipv4Route> rtentry = LookupStatic (ipHeader, p);
   if (rtentry != 0)
     {
       NS_LOG_LOGIC ("Found unicast destination- calling unicast callback");
