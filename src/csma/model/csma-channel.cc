@@ -265,8 +265,8 @@ CsmaChannel::TransmitEnd (uint32_t srcId)
     }
 
   // also schedule for the tx side to go back to IDLE
-  Simulator::Schedule (m_delay, &CsmaChannel::PropagationCompleteEvent,
-                       this, srcId);
+  Simulator::Schedule (IsFullDuplex () ? Time (0) : m_delay,
+                       &CsmaChannel::PropagationCompleteEvent, this, srcId);
   return retVal;
 }
 
