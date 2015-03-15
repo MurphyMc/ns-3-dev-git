@@ -483,14 +483,13 @@ CsmaNetDevice::TransmitStart (void)
       // rechedule TransmitStart() unless we have exhausted all of our retries.
       // If in full duplex mode, we don't need to do this.
       //
-      m_txMachineState = BACKOFF;
-
       if (m_channel->IsFullDuplex ())
         {
           NS_LOG_LOGIC ("Channel busy!");
         }
       else
         {
+          m_txMachineState = BACKOFF;
           if (m_backoff.MaxRetriesReached ())
             {
               //
